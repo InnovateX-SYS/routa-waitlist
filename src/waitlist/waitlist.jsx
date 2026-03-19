@@ -137,7 +137,7 @@ const Waitlist = () => {
             {/* Desktop links */}
             <div className="hidden sm:flex items-center gap-[30px] font-medium text-[18px] text-[#232323] tracking-[0.01em] leading-none">
               <button onClick={() => scrollTo(featuresSectionRef)} className="hover:text-[#6B6EF5] transition-colors">Features</button>
-              <button onClick={() => scrollTo(exploresSectionRef)} className="hover:text-[#6B6EF5] transition-colors">About</button>
+              <button onClick={() => scrollTo(exploresSectionRef)} className="hover:text-[#6B6EF5] transition-colors">Explore</button>
               <button onClick={() => scrollTo(faqSectionRef)} className="hover:text-[#6B6EF5] transition-colors">FAQs</button>
             </div>
             <button
