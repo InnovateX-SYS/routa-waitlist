@@ -129,42 +129,84 @@ const Waitlist = () => {
         className="pt-[30px] rounded-[10px] px-4 sm:px-[26px]"
       >
         {/* Navbar */}
-        <div className="h-auto min-h-[80px] w-full max-w-[832px] bg-white rounded-[50px] flex flex-wrap items-center mx-auto mb-[60px] sm:mb-[110px] px-[26px] py-3 gap-4">
+        <div className="h-auto min-h-[80px] w-full max-w-[832px] bg-white rounded-[50px] flex items-center mx-auto mb-[60px] sm:mb-[110px] px-[26px] py-3 gap-4">
           <div className="w-[104px] h-[45px] flex-shrink-0">
             <img src="/assets/routa-logo.png" alt="Routa" className="w-full h-full object-contain" />
           </div>
-          <div className="flex items-center justify-end gap-4 sm:gap-[30px] ml-auto">
+          <div className="flex items-center justify-end gap-3 sm:gap-[30px] ml-auto">
             {/* Desktop links */}
             <div className="hidden sm:flex items-center gap-[30px] font-medium text-[18px] text-[#232323] tracking-[0.01em] leading-none">
               <button onClick={() => scrollTo(featuresSectionRef)} className="hover:text-[#6B6EF5] transition-colors">Features</button>
-              <button onClick={() => scrollTo(exploresSectionRef)} className="hover:text-[#6B6EF5] transition-colors">Explore</button>
+              <button onClick={() => scrollTo(exploresSectionRef)} className="hover:text-[#6B6EF5] transition-colors">About</button>
               <button onClick={() => scrollTo(faqSectionRef)} className="hover:text-[#6B6EF5] transition-colors">FAQs</button>
             </div>
+            {/* Join Waitlist — desktop only */}
             <button
               onClick={scrollToEmailSection}
-              className="bg-[#6B6EF5] h-[44px] sm:h-[54px] px-5 sm:px-[21.5px] text-white rounded-full font-medium text-[16px] sm:text-[18px] tracking-[0.01em] leading-none whitespace-nowrap transition-all duration-200 hover:bg-[#5557e0] hover:scale-105 active:scale-95"
+              className="hidden sm:flex bg-[#6B6EF5] h-[54px] px-[21.5px] text-white rounded-full font-medium text-[18px] tracking-[0.01em] leading-none whitespace-nowrap items-center justify-center transition-all duration-200 hover:bg-[#5557e0] hover:scale-105 active:scale-95"
             >
               Join Waitlist
             </button>
             {/* Hamburger — mobile only */}
             <button
-              className="sm:hidden flex flex-col justify-center gap-[5px] w-[36px] h-[36px] flex-shrink-0"
+              className="sm:hidden flex items-center justify-center w-[44px] h-[44px] rounded-[10px] border-2 border-[#6B6EF5] flex-shrink-0"
               onClick={() => setMenuOpen((v) => !v)}
             >
-              <span className={`block h-[2px] w-full bg-[#232323] transition-transform duration-300 ${menuOpen ? "rotate-45 translate-y-[7px]" : ""}`} />
-              <span className={`block h-[2px] w-full bg-[#232323] transition-opacity duration-300 ${menuOpen ? "opacity-0" : ""}`} />
-              <span className={`block h-[2px] w-full bg-[#232323] transition-transform duration-300 ${menuOpen ? "-rotate-45 -translate-y-[7px]" : ""}`} />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M3 6h18M3 12h18M3 18h18" stroke="#6B6EF5" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
             </button>
           </div>
-          {/* Mobile dropdown menu */}
-          {menuOpen && (
-            <div className="w-full sm:hidden flex flex-col gap-3 pt-2 pb-1 border-t border-[#E5E5E5] mt-1">
-              <button onClick={() => scrollTo(featuresSectionRef)} className="text-left font-medium text-[18px] text-[#232323] px-2 py-2 hover:text-[#6B6EF5]">Features</button>
-              <button onClick={() => scrollTo(exploresSectionRef)} className="text-left font-medium text-[18px] text-[#232323] px-2 py-2 hover:text-[#6B6EF5]">About</button>
-              <button onClick={() => scrollTo(faqSectionRef)} className="text-left font-medium text-[18px] text-[#232323] px-2 py-2 hover:text-[#6B6EF5]">FAQs</button>
-            </div>
-          )}
         </div>
+
+        {/* Mobile fullscreen menu */}
+        {menuOpen && (
+          <div
+            className="fixed inset-0 z-50 sm:hidden flex flex-col bg-white"
+            style={{ animation: "fadeIn 0.25s ease forwards" }}
+          >
+            {/* Top bar */}
+            <div className="flex items-center justify-between px-6 pt-8 pb-6">
+              <img src="/assets/routa-logo.png" alt="Routa" className="h-[35px] object-contain" />
+              <button
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-center w-[44px] h-[44px] rounded-[10px] border-2 border-[#6B6EF5]"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="#6B6EF5" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Links */}
+            <div className="flex flex-col px-6 mt-4 flex-1">
+              {[
+                { label: "Features", ref: featuresSectionRef },
+                { label: "About", ref: exploresSectionRef },
+                { label: "FAQs", ref: faqSectionRef },
+              ].map((item, i) => (
+                <button
+                  key={i}
+                  onClick={() => scrollTo(item.ref)}
+                  className="text-left text-[#848AFF] font-medium text-[28px] py-5 border-b border-[#E5E5E5] hover:text-[#6B6EF5] hover:pl-4 active:scale-95 transition-all duration-200"
+                  style={{ animation: `linkFadeIn 0.3s ease ${i * 0.08}s both` }}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Bottom Join Waitlist */}
+            <div className="px-6 pb-12">
+              <button
+                onClick={scrollToEmailSection}
+                className="w-full bg-[#6B6EF5] text-white h-[60px] rounded-full font-bold text-[18px] transition-all duration-200 hover:bg-[#5557e0] active:scale-95"
+              >
+                Join Waitlist
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Hero Text */}
         <div className="w-full max-w-[993px] mx-auto flex flex-col items-center justify-center mb-[56px] px-4 text-center">
@@ -478,6 +520,14 @@ const Waitlist = () => {
         @keyframes modalIn {
           from { opacity: 0; transform: scale(0.85) translateY(20px); }
           to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes linkFadeIn {
+          from { opacity: 0; transform: translateX(-16px); }
+          to   { opacity: 1; transform: translateX(0); }
         }
       `}</style>
     </div>
