@@ -45,9 +45,18 @@ const Waitlist = () => {
   const [current, setCurrent] = useState(destinations.length);
   const [openFaq, setOpenFaq] = useState(null);
   const [sizes, setSizes] = useState(getCarouselSizes());
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [userType, setUserType] = useState("traveller");
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState(false);
   const intervalRef = useRef(null);
   const isResetting = useRef(false);
   const emailSectionRef = useRef(null);
+  const featuresSectionRef = useRef(null);
+  const exploresSectionRef = useRef(null);
+  const faqSectionRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => setSizes(getCarouselSizes());
@@ -74,22 +83,36 @@ const Waitlist = () => {
   const getTranslateX = () => {
     const { CARD_W, FEATURED_W, GAP } = sizes;
     const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
-
-    // Position of the left edge of the featured card in the strip
-    // Each card before it: CARD_W + GAP, except the featured card itself is FEATURED_W
     let leftEdge = 0;
     for (let i = 0; i < current; i++) {
       leftEdge += CARD_W + GAP;
     }
-
-    // We want the featured card centered in the viewport
     const centerOffset = vw / 2 - FEATURED_W / 2;
-
     return -(leftEdge - centerOffset);
   };
 
+  const scrollTo = (ref) => {
+    setMenuOpen(false);
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const scrollToEmailSection = () => {
+    setMenuOpen(false);
     emailSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const handleJoin = () => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError(true);
+      emailSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => setEmailError(false), 3000);
+      return;
+    }
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setSubmitted(true);
+    }, 1500);
   };
 
   return (
@@ -110,19 +133,37 @@ const Waitlist = () => {
           <div className="w-[104px] h-[45px] flex-shrink-0">
             <img src="/assets/routa-logo.png" alt="Routa" className="w-full h-full object-contain" />
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-4 sm:gap-[30px] ml-auto">
+          <div className="flex items-center justify-end gap-4 sm:gap-[30px] ml-auto">
+            {/* Desktop links */}
             <div className="hidden sm:flex items-center gap-[30px] font-medium text-[18px] text-[#232323] tracking-[0.01em] leading-none">
-              <span>Features</span>
-              <span>About</span>
-              <span>FAQs</span>
+              <button onClick={() => scrollTo(featuresSectionRef)} className="hover:text-[#6B6EF5] transition-colors">Features</button>
+              <button onClick={() => scrollTo(exploresSectionRef)} className="hover:text-[#6B6EF5] transition-colors">About</button>
+              <button onClick={() => scrollTo(faqSectionRef)} className="hover:text-[#6B6EF5] transition-colors">FAQs</button>
             </div>
             <button
               onClick={scrollToEmailSection}
-              className="bg-[#6B6EF5] h-[44px] sm:h-[54px] px-5 sm:px-[21.5px] text-white rounded-full font-medium text-[16px] sm:text-[18px] tracking-[0.01em] leading-none whitespace-nowrap"
+              className="bg-[#6B6EF5] h-[44px] sm:h-[54px] px-5 sm:px-[21.5px] text-white rounded-full font-medium text-[16px] sm:text-[18px] tracking-[0.01em] leading-none whitespace-nowrap transition-all duration-200 hover:bg-[#5557e0] hover:scale-105 active:scale-95"
             >
               Join Waitlist
             </button>
+            {/* Hamburger — mobile only */}
+            <button
+              className="sm:hidden flex flex-col justify-center gap-[5px] w-[36px] h-[36px] flex-shrink-0"
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              <span className={`block h-[2px] w-full bg-[#232323] transition-transform duration-300 ${menuOpen ? "rotate-45 translate-y-[7px]" : ""}`} />
+              <span className={`block h-[2px] w-full bg-[#232323] transition-opacity duration-300 ${menuOpen ? "opacity-0" : ""}`} />
+              <span className={`block h-[2px] w-full bg-[#232323] transition-transform duration-300 ${menuOpen ? "-rotate-45 -translate-y-[7px]" : ""}`} />
+            </button>
           </div>
+          {/* Mobile dropdown menu */}
+          {menuOpen && (
+            <div className="w-full sm:hidden flex flex-col gap-3 pt-2 pb-1 border-t border-[#E5E5E5] mt-1">
+              <button onClick={() => scrollTo(featuresSectionRef)} className="text-left font-medium text-[18px] text-[#232323] px-2 py-2 hover:text-[#6B6EF5]">Features</button>
+              <button onClick={() => scrollTo(exploresSectionRef)} className="text-left font-medium text-[18px] text-[#232323] px-2 py-2 hover:text-[#6B6EF5]">About</button>
+              <button onClick={() => scrollTo(faqSectionRef)} className="text-left font-medium text-[18px] text-[#232323] px-2 py-2 hover:text-[#6B6EF5]">FAQs</button>
+            </div>
+          )}
         </div>
 
         {/* Hero Text */}
@@ -140,39 +181,55 @@ const Waitlist = () => {
         {/* Email + Radio */}
         <div
           ref={emailSectionRef}
-          className="flex flex-col sm:flex-row items-stretch sm:items-center bg-[#FBFBFB] rounded-[24px] sm:rounded-full px-4 py-3 w-full max-w-[574px] mx-auto gap-3 mb-[50px]"
+          className={`flex flex-col sm:flex-row items-stretch sm:items-center bg-[#FBFBFB] rounded-[24px] sm:rounded-full px-4 py-3 w-full max-w-[574px] mx-auto gap-3 mb-[50px] transition-all duration-300 ${emailError ? "ring-2 ring-red-400" : ""}`}
         >
           <input
             type="email"
             placeholder="Email Address"
-            className="w-full sm:flex-1 bg-[#D9D9D9] rounded-full px-5 py-[14px] outline-none text-[#1A1A1A] text-[16px] sm:text-[18px] font-normal tracking-[1%] leading-none"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={`w-full sm:flex-1 rounded-full px-5 py-[14px] outline-none text-[#1A1A1A] text-[16px] sm:text-[18px] font-normal tracking-[1%] leading-none transition-colors duration-300 ${emailError ? "bg-red-100 placeholder-red-400" : "bg-[#D9D9D9]"}`}
           />
           <div className="flex items-center justify-center gap-5 pr-2 flex-shrink-0">
             <label className="flex items-center gap-[10px] cursor-pointer text-[16px] sm:text-[18px] text-[#232323] tracking-[1%] leading-none">
-              <input type="radio" name="userType" value="traveller" defaultChecked className="accent-[#6B6EF5] w-4 h-4" />
+              <input type="radio" name="userType" value="traveller" checked={userType === "traveller"} onChange={() => setUserType("traveller")} className="accent-[#6B6EF5] w-4 h-4" />
               Traveller
             </label>
             <label className="flex items-center gap-[10px] cursor-pointer text-[16px] sm:text-[18px] text-[#232323] tracking-[1%] leading-none">
-              <input type="radio" name="userType" value="agency" className="accent-[#6B6EF5] w-4 h-4" />
+              <input type="radio" name="userType" value="agency" checked={userType === "agency"} onChange={() => setUserType("agency")} className="accent-[#6B6EF5] w-4 h-4" />
               Agency
             </label>
           </div>
         </div>
+        {emailError && (
+          <p className="text-red-400 text-[14px] text-center -mt-4 mb-4 animate-pulse">
+            Please enter a valid email address.
+          </p>
+        )}
 
         {/* CTA Button */}
         <div>
           <button
             type="button"
-            onClick={scrollToEmailSection}
-            className="bg-[#FFFFFF] flex h-[50px] w-[193px] text-[#000000] items-center justify-center rounded-full font-bold text-[18px] tracking-[1%] leading-none mx-auto"
+            onClick={handleJoin}
+            disabled={loading}
+            className="bg-[#FFFFFF] flex h-[50px] w-[193px] text-[#000000] items-center justify-center rounded-full font-bold text-[18px] tracking-[1%] leading-none mx-auto transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-70"
           >
-            Join Waitlist
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                Joining...
+              </span>
+            ) : "Join Waitlist"}
           </button>
         </div>
       </div>
 
       {/* ─── Features Section ─── */}
-      <div className="w-full px-4 sm:px-[60px] py-[60px]">
+      <div ref={featuresSectionRef} className="w-full px-4 sm:px-[60px] py-[60px]">
         <div className="flex items-start justify-between mb-[40px] flex-wrap gap-4">
           <div className="flex flex-col gap-[16px]">
             <span className="bg-[#6B6EF5] text-white text-[18px] font-bold tracking-[0.1em] items-center justify-center w-[168px] h-[46px] uppercase -rotate-3 flex rounded-[8px]">
@@ -208,7 +265,7 @@ const Waitlist = () => {
       </div>
 
       {/* ─── Explore / Places Section ─── */}
-      <div className="w-full py-[60px]">
+      <div ref={exploresSectionRef} className="w-full py-[60px]">
         <div className="flex items-start justify-between px-4 sm:px-[60px] mb-[60px] sm:mb-[127px] flex-wrap gap-4">
           <div className="flex flex-col gap-[16px]">
             <span className="bg-[#6B6EF5] text-white text-[18px] font-bold tracking-[0.1em] items-center justify-center w-[168px] h-[46px] uppercase -rotate-3 flex rounded-[8px]">
@@ -266,7 +323,7 @@ const Waitlist = () => {
       </div>
 
       {/* ─── FAQ Section ─── */}
-      <div className="w-full px-4 sm:px-[60px] py-[60px] bg-[#FAFAF5]">
+      <div ref={faqSectionRef} className="w-full px-4 sm:px-[60px] py-[60px] bg-[#FAFAF5]">
         <div className="flex items-start justify-between mb-[50px] flex-wrap gap-4">
           <div className="flex flex-col gap-[16px]">
             <span className="bg-[#6B6EF5] text-white text-[18px] font-bold tracking-[0.1em] items-center justify-center w-[168px] h-[46px] uppercase -rotate-3 flex rounded-[8px]">
@@ -324,10 +381,19 @@ const Waitlist = () => {
           </div>
 
           <button
-            onClick={scrollToEmailSection}
-            className="bg-[#ffffff] text-[#000000] h-[50px] w-[193px] font-bold text-[18px] tracking-[0.18px] uppercase flex items-center justify-center rounded-full"
+            onClick={handleJoin}
+            disabled={loading}
+            className="bg-[#ffffff] text-[#000000] h-[50px] w-[193px] font-bold text-[18px] tracking-[0.18px] uppercase flex items-center justify-center rounded-full transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-70"
           >
-            Join Waitlist
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                Joining...
+              </span>
+            ) : "Join Waitlist"}
           </button>
         </div>
 
@@ -376,6 +442,44 @@ const Waitlist = () => {
 
         </div>
       </div>
+      {/* ─── Success Modal ─── */}
+      {submitted && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setSubmitted(false)}
+          />
+          {/* Modal */}
+          <div className="relative bg-white rounded-[24px] px-8 py-10 w-full max-w-[420px] flex flex-col items-center text-center shadow-2xl animate-[modalIn_0.3s_ease_forwards]"
+            style={{ animation: "modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards" }}
+          >
+            {/* Checkmark */}
+            <div className="w-[72px] h-[72px] rounded-full bg-[#6B6EF5] flex items-center justify-center mb-6">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                <path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h3 className="text-[#232323] font-bold text-[24px] mb-3">You're on the list! 🎉</h3>
+            <p className="text-[#666] text-[15px] leading-relaxed mb-6">
+              Thanks for joining the Routa waitlist. We'll be in touch at <span className="text-[#6B6EF5] font-medium">{email}</span> when we launch.
+            </p>
+            <button
+              onClick={() => setSubmitted(false)}
+              className="bg-[#6B6EF5] text-white h-[48px] w-full rounded-full font-bold text-[16px] transition-all duration-200 hover:bg-[#5557e0] hover:scale-105 active:scale-95"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes modalIn {
+          from { opacity: 0; transform: scale(0.85) translateY(20px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };
