@@ -51,6 +51,7 @@ const Waitlist = () => {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const intervalRef = useRef(null);
   const isResetting = useRef(false);
   const emailSectionRef = useRef(null);
@@ -101,18 +102,45 @@ const Waitlist = () => {
     emailSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setEmailError(true);
       emailSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       setTimeout(() => setEmailError(false), 3000);
       return;
     }
+
     setLoading(true);
-    setTimeout(() => {
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("https://routa-backend-core.vercel.app/api/v1/waitlist/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          type: userType.toUpperCase(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitted(true);
+      } else if (response.status === 409) {
+        setErrorMessage("This email is already on the waitlist. We'll be in touch soon!");
+        emailSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => setErrorMessage(""), 10000);
+      } else {
+        setErrorMessage(data.message || "Something went wrong. Please try again.");
+        setTimeout(() => setErrorMessage(""), 10000);
+      }
+    } catch (error) {
+      setErrorMessage("Network error. Please check your connection and try again.");
+      setTimeout(() => setErrorMessage(""), 10000);
+    } finally {
       setLoading(false);
-      setSubmitted(true);
-    }, 1500);
+    }
   };
 
   return (
@@ -244,8 +272,13 @@ const Waitlist = () => {
           </div>
         </div>
         {emailError && (
-          <p className="text-red-400 text-[14px] text-center -mt-4 mb-4 animate-pulse">
+          <p className="text-red-400 text-[16px] text-center -mt-4 mb-4 animate-pulse">
             Please enter a valid email address.
+          </p>
+        )}
+        {errorMessage && (
+          <p className="text-red-400 text-[16px] text-center -mt-4 mb-4">
+            {errorMessage}
           </p>
         )}
 
