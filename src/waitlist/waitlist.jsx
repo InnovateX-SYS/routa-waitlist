@@ -210,7 +210,7 @@ const Waitlist = () => {
             <div className="flex flex-col px-6 mt-4 flex-1">
               {[
                 { label: "Features", ref: featuresSectionRef },
-                { label: "About", ref: exploresSectionRef },
+                { label: "Explore", ref: exploresSectionRef },
                 { label: "FAQs", ref: faqSectionRef },
               ].map((item, i) => (
                 <button
