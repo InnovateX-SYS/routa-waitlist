@@ -33,6 +33,15 @@ const faqs = [
   },
 ];
 
+const referralSources = [
+  "Friend or family",
+  "Social media",
+  "Social media ads",
+  "Search engine",
+  "Blog or article",
+  "Other",
+];
+
 const getCarouselSizes = () => {
   if (typeof window === "undefined") return { CARD_W: 300, FEATURED_W: 380, FEATURED_H: 460, CARD_H: 380, GAP: 40 };
   const vw = window.innerWidth;
@@ -46,11 +55,19 @@ const Waitlist = () => {
   const [openFaq, setOpenFaq] = useState(null);
   const [sizes, setSizes] = useState(getCarouselSizes());
   const [menuOpen, setMenuOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [agencyName, setAgencyName] = useState("");
+  const [webUrl, setWebUrl] = useState("");
   const [email, setEmail] = useState("");
+  const [referralSource, setReferralSource] = useState("");
   const [userType, setUserType] = useState("traveller");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState(false);
+  const [nameError, setNameError] = useState(false);
+  const [agencyNameError, setAgencyNameError] = useState(false);
+  const [webUrlError, setWebUrlError] = useState(false);
+  const [sourceError, setSourceError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const intervalRef = useRef(null);
   const isResetting = useRef(false);
@@ -103,10 +120,27 @@ const Waitlist = () => {
   };
 
   const handleJoin = async () => {
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError(true);
+    const isAgency = userType === "agency";
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const isSourceValid = referralSource.length > 0;
+    const isNameValid = isAgency ? true : name.trim().length > 0;
+    const isAgencyNameValid = isAgency ? agencyName.trim().length > 0 : true;
+    const isWebUrlValid = isAgency ? webUrl.trim().length > 0 : true;
+
+    if (!isNameValid || !isAgencyNameValid || !isWebUrlValid || !isEmailValid || !isSourceValid) {
+      setNameError(!isNameValid);
+      setAgencyNameError(!isAgencyNameValid);
+      setWebUrlError(!isWebUrlValid);
+      setEmailError(!isEmailValid);
+      setSourceError(!isSourceValid);
       emailSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => setEmailError(false), 3000);
+      setTimeout(() => {
+        setNameError(false);
+        setAgencyNameError(false);
+        setWebUrlError(false);
+        setEmailError(false);
+        setSourceError(false);
+      }, 3000);
       return;
     }
 
@@ -119,7 +153,11 @@ const Waitlist = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
+          referralSource,
           type: userType.toUpperCase(),
+          ...(isAgency
+            ? { agencyName: agencyName.trim(), websiteUrl: webUrl.trim() }
+            : { name: name.trim() }),
         }),
       });
 
@@ -154,7 +192,7 @@ const Waitlist = () => {
           backgroundPosition: "center",
           minHeight: "100vh",
         }}
-        className="pt-[30px] rounded-[10px] px-4 sm:px-[26px]"
+        className="pt-[30px] pb-[80px] rounded-[10px] px-4 sm:px-[26px]"
       >
         {/* Navbar */}
         <div className="h-auto min-h-[80px] w-full max-w-[832px] bg-white rounded-[50px] flex items-center mx-auto mb-[60px] sm:mb-[110px] px-[26px] py-3 gap-4">
@@ -248,32 +286,99 @@ const Waitlist = () => {
           </p>
         </div>
 
-        {/* Email + Radio */}
+        {/* Sign-up form */}
         <div
           ref={emailSectionRef}
-          className={`flex flex-col sm:flex-row items-stretch sm:items-center bg-[#FBFBFB] rounded-[24px] sm:rounded-full px-4 py-3 w-full max-w-[574px] mx-auto gap-3 mb-[50px] transition-all duration-300 ${emailError ? "ring-2 ring-red-400" : ""}`}
+          className="flex flex-col items-stretch bg-[#FBFBFB] rounded-[24px] px-4 py-5 w-full max-w-[574px] mx-auto gap-3 mb-[50px] transition-all duration-300"
         >
+          {/* Use-type selector */}
+          <div className="flex flex-col gap-2 mb-1">
+            <span className="text-[#232323] text-[18px] sm:text-[20px] font-semibold text-center">
+              How would you like to use Routa?
+            </span>
+            <div className="flex items-center gap-1 bg-[#ECECEC] rounded-full p-[3px]">
+              <button
+                type="button"
+                onClick={() => setUserType("traveller")}
+                className={`flex-1 rounded-full py-[8px] text-[14px] sm:text-[15px] font-medium transition-all duration-200 ${userType === "traveller" ? "bg-[#6B6EF5] text-white shadow-sm" : "text-[#232323] hover:text-[#6B6EF5]"}`}
+              >
+                Traveller
+              </button>
+              <button
+                type="button"
+                onClick={() => setUserType("agency")}
+                className={`flex-1 rounded-full py-[8px] text-[14px] sm:text-[15px] font-medium transition-all duration-200 ${userType === "agency" ? "bg-[#6B6EF5] text-white shadow-sm" : "text-[#232323] hover:text-[#6B6EF5]"}`}
+              >
+                Agency
+              </button>
+            </div>
+          </div>
+
+          {userType === "agency" ? (
+            <>
+              <input
+                type="text"
+                placeholder="Agency Name"
+                value={agencyName}
+                onChange={(e) => setAgencyName(e.target.value)}
+                className={`w-full rounded-full px-5 py-[14px] outline-none text-[#1A1A1A] text-[16px] sm:text-[18px] font-normal tracking-[1%] leading-none placeholder-[#4a4a4a] transition-colors duration-300 ${agencyNameError ? "bg-red-100 placeholder-red-400 ring-2 ring-red-400" : "bg-white border border-[#E2E2E2]"}`}
+              />
+              <input
+                type="url"
+                placeholder="Website URL"
+                value={webUrl}
+                onChange={(e) => setWebUrl(e.target.value)}
+                className={`w-full rounded-full px-5 py-[14px] outline-none text-[#1A1A1A] text-[16px] sm:text-[18px] font-normal tracking-[1%] leading-none placeholder-[#4a4a4a] transition-colors duration-300 ${webUrlError ? "bg-red-100 placeholder-red-400 ring-2 ring-red-400" : "bg-white border border-[#E2E2E2]"}`}
+              />
+            </>
+          ) : (
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={`w-full rounded-full px-5 py-[14px] outline-none text-[#1A1A1A] text-[16px] sm:text-[18px] font-normal tracking-[1%] leading-none placeholder-[#4a4a4a] transition-colors duration-300 ${nameError ? "bg-red-100 placeholder-red-400 ring-2 ring-red-400" : "bg-white border border-[#E2E2E2]"}`}
+            />
+          )}
+
           <input
             type="email"
             placeholder="Email Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={`w-full sm:flex-1 rounded-full px-5 py-[14px] outline-none text-[#1A1A1A] text-[16px] sm:text-[18px] font-normal tracking-[1%] leading-none transition-colors duration-300 ${emailError ? "bg-red-100 placeholder-red-400" : "bg-[#D9D9D9]"}`}
+            className={`w-full rounded-full px-5 py-[14px] outline-none text-[#1A1A1A] text-[16px] sm:text-[18px] font-normal tracking-[1%] leading-none placeholder-[#4a4a4a] transition-colors duration-300 ${emailError ? "bg-red-100 placeholder-red-400 ring-2 ring-red-400" : "bg-white border border-[#E2E2E2]"}`}
           />
-          <div className="flex items-center justify-center gap-5 pr-2 flex-shrink-0">
-            <label className="flex items-center gap-[10px] cursor-pointer text-[16px] sm:text-[18px] text-[#232323] tracking-[1%] leading-none">
-              <input type="radio" name="userType" value="traveller" checked={userType === "traveller"} onChange={() => setUserType("traveller")} className="accent-[#6B6EF5] w-4 h-4" />
-              Traveller
-            </label>
-            <label className="flex items-center gap-[10px] cursor-pointer text-[16px] sm:text-[18px] text-[#232323] tracking-[1%] leading-none">
-              <input type="radio" name="userType" value="agency" checked={userType === "agency"} onChange={() => setUserType("agency")} className="accent-[#6B6EF5] w-4 h-4" />
-              Agency
-            </label>
-          </div>
+          <select
+            value={referralSource}
+            onChange={(e) => setReferralSource(e.target.value)}
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23232323' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 1.25rem center",
+              backgroundSize: "1.1rem",
+            }}
+            className={`w-full appearance-none rounded-full pl-5 pr-12 py-[14px] outline-none text-[16px] sm:text-[18px] font-normal tracking-[1%] leading-none placeholder-[#4a4a4a] transition-colors duration-300 ${sourceError ? "bg-red-100 ring-2 ring-red-400 text-red-400" : "bg-white border border-[#E2E2E2]"} ${referralSource ? "text-[#1A1A1A]" : "text-[#4a4a4a]"}`}
+          >
+            <option value="" disabled>How did you hear about us?</option>
+            {referralSources.map((source) => (
+              <option key={source} value={source} className="text-[#1A1A1A]">
+                {source}
+              </option>
+            ))}
+          </select>
         </div>
-        {emailError && (
+        {(nameError || agencyNameError || webUrlError || emailError || sourceError) && (
           <p className="text-red-400 text-[16px] text-center -mt-4 mb-4 animate-pulse">
-            Please enter a valid email address.
+            {nameError
+              ? "Please enter your name."
+              : agencyNameError
+              ? "Please enter your agency name."
+              : webUrlError
+              ? "Please enter your website URL."
+              : emailError
+              ? "Please enter a valid email address."
+              : "Please tell us how you heard about us."}
           </p>
         )}
         {errorMessage && (
