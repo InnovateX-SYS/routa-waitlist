@@ -336,7 +336,7 @@ const Waitlist = () => {
               type="text"
               placeholder="Full Name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value.replace(/[0-9]/g, ""))}
               className={`w-full rounded-full px-5 py-[14px] outline-none text-[#1A1A1A] text-[16px] sm:text-[18px] font-normal tracking-[1%] leading-none placeholder-[#4a4a4a] transition-colors duration-300 ${nameError ? "bg-red-100 placeholder-red-400 ring-2 ring-red-400" : "bg-white border border-[#E2E2E2]"}`}
             />
           )}
