@@ -42,6 +42,32 @@ const referralSources = [
   { value: "OTHER", label: "Other" },
 ];
 
+// Endpoint that returns the total number of people on the waitlist.
+// Expected to respond with a number somewhere in the JSON, e.g.
+// { count: 1234 }  |  { total: 1234 }  |  { data: { count: 1234 } }
+const WAITLIST_COUNT_ENDPOINT =
+  "https://routa-backend-core.vercel.app/api/v1/waitlist/count";
+
+// Padding added on top of the real signup count so the badge looks more
+// populated early on. Set to 0 to show the true number.
+const WAITLIST_COUNT_BASELINE = 300;
+
+// Pulls the first numeric value we can find from a few common shapes.
+const extractCount = (data) => {
+  if (typeof data === "number") return data;
+  if (!data || typeof data !== "object") return null;
+  const candidates = [
+    data.count,
+    data.total,
+    data.totalCount,
+    data?.data?.count,
+    data?.data?.total,
+    data?.data?.totalCount,
+  ];
+  const found = candidates.find((v) => typeof v === "number");
+  return typeof found === "number" ? found : null;
+};
+
 const getCarouselSizes = () => {
   if (typeof window === "undefined") return { CARD_W: 300, FEATURED_W: 380, FEATURED_H: 460, CARD_H: 380, GAP: 40 };
   const vw = window.innerWidth;
@@ -69,6 +95,8 @@ const Waitlist = () => {
   const [webUrlError, setWebUrlError] = useState(false);
   const [sourceError, setSourceError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [waitlistCount, setWaitlistCount] = useState(null);
+  const [displayCount, setDisplayCount] = useState(0);
   const intervalRef = useRef(null);
   const isResetting = useRef(false);
   const emailSectionRef = useRef(null);
@@ -88,6 +116,47 @@ const Waitlist = () => {
     }, 2000);
     return () => clearInterval(intervalRef.current);
   }, []);
+
+  // Fetch the live waitlist count once on mount.
+  useEffect(() => {
+    let cancelled = false;
+    const fetchCount = async () => {
+      try {
+        const res = await fetch(WAITLIST_COUNT_ENDPOINT);
+        if (!res.ok) return;
+        const data = await res.json();
+        const count = extractCount(data);
+        if (!cancelled && typeof count === "number")
+          setWaitlistCount(count + WAITLIST_COUNT_BASELINE);
+      } catch {
+        // Silently ignore — the badge just stays hidden if the count isn't available.
+      }
+    };
+    fetchCount();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Count-up animation whenever the target count changes.
+  useEffect(() => {
+    if (typeof waitlistCount !== "number") return;
+    const start = displayCount;
+    const end = waitlistCount;
+    if (start === end) return;
+    const duration = 1000;
+    const startTime = performance.now();
+    let frame;
+    const tick = (now) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      setDisplayCount(Math.round(start + (end - start) * eased));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waitlistCount]);
 
   useEffect(() => {
     if (current >= destinations.length * 2) {
@@ -169,6 +238,8 @@ const Waitlist = () => {
 
       if (response.ok) {
         setSubmitted(true);
+        // Optimistically reflect this new signup in the live count.
+        setWaitlistCount((prev) => (typeof prev === "number" ? prev + 1 : prev));
       } else {
         // Backend messages can be a string or an array of validation strings.
         const backendMessage = Array.isArray(data.message)
@@ -299,6 +370,30 @@ const Waitlist = () => {
             <br className="hidden sm:block" />
             plan itineraries, and book unforgettable travel experiences.
           </p>
+
+          {/* Live signup count */}
+          {typeof waitlistCount === "number" && (
+            <div
+              className="mt-6 flex items-center gap-3 bg-white/15 backdrop-blur-md border border-white/25 rounded-full pl-2 pr-5 py-2"
+              style={{ animation: "fadeIn 0.5s ease forwards" }}
+            >
+              <div className="flex -space-x-2">
+                {[5, 12, 32, 47].map((id) => (
+                  <img
+                    key={id}
+                    src={`https://i.pravatar.cc/64?img=${id}`}
+                    alt=""
+                    loading="lazy"
+                    className="w-7 h-7 rounded-full border-2 border-white object-cover bg-white/20"
+                  />
+                ))}
+              </div>
+              <p className="text-white text-[15px] sm:text-[16px] font-medium tracking-[0.01em] whitespace-nowrap">
+                <span className="font-bold">{displayCount.toLocaleString()}+</span>{" "}
+                people have joined the waitlist
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Sign-up form */}
