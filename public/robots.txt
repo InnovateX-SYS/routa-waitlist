@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://routa.travel/sitemap.xml
+Sitemap: https://www.routa.travel/sitemap.xml
