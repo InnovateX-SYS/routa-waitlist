@@ -34,12 +34,12 @@ const faqs = [
 ];
 
 const referralSources = [
-  "Friend or family",
-  "Social media",
-  "Social media ads",
-  "Search engine",
-  "Blog or article",
-  "Other",
+  { value: "FRIEND_OR_FAMILY", label: "Friend or family" },
+  { value: "SOCIAL_MEDIA", label: "Social media" },
+  { value: "SOCIAL_MEDIA_ADS", label: "Social media ads" },
+  { value: "SEARCH_ENGINE", label: "Search engine" },
+  { value: "BLOG_OR_ARTICLE", label: "Blog or article" },
+  { value: "OTHER", label: "Other" },
 ];
 
 const getCarouselSizes = () => {
@@ -123,9 +123,12 @@ const Waitlist = () => {
     const isAgency = userType === "agency";
     const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     const isSourceValid = referralSource.length > 0;
-    const isNameValid = isAgency ? true : name.trim().length > 0;
-    const isAgencyNameValid = isAgency ? agencyName.trim().length > 0 : true;
-    const isWebUrlValid = isAgency ? webUrl.trim().length > 0 : true;
+    const isNameValid = isAgency ? true : name.trim().length >= 5;
+    const isAgencyNameValid = isAgency ? agencyName.trim().length >= 5 : true;
+    const isWebUrlValid = isAgency
+      ? webUrl.trim().length >= 8 &&
+        /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i.test(webUrl.trim())
+      : true;
 
     if (!isNameValid || !isAgencyNameValid || !isWebUrlValid || !isEmailValid || !isSourceValid) {
       setNameError(!isNameValid);
@@ -147,30 +150,42 @@ const Waitlist = () => {
     setLoading(true);
     setErrorMessage("");
 
+    const endpoint = isAgency
+      ? "https://routa-backend-core.vercel.app/api/v1/waitlist/agency/join"
+      : "https://routa-backend-core.vercel.app/api/v1/waitlist/traveller/join";
+
+    const payload = isAgency
+      ? { agencyName: agencyName.trim(), websiteUrl: webUrl.trim(), email, referralSource }
+      : { fullName: name.trim(), email, referralSource };
+
     try {
-      const response = await fetch("https://routa-backend-core.vercel.app/api/v1/waitlist/join", {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          referralSource,
-          type: userType.toUpperCase(),
-          ...(isAgency
-            ? { agencyName: agencyName.trim(), websiteUrl: webUrl.trim() }
-            : { name: name.trim() }),
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (response.ok) {
         setSubmitted(true);
-      } else if (response.status === 409) {
-        setErrorMessage("This email is already on the waitlist. We'll be in touch soon!");
-        emailSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-        setTimeout(() => setErrorMessage(""), 10000);
       } else {
-        setErrorMessage(data.message || "Something went wrong. Please try again.");
+        // Backend messages can be a string or an array of validation strings.
+        const backendMessage = Array.isArray(data.message)
+          ? data.message[0]
+          : data.message;
+
+        let userMessage;
+        if (response.status >= 500) {
+          // Real server-side failure — keep it friendly, don't leak internals.
+          userMessage = "Something went wrong on our end. Please try again in a moment.";
+        } else {
+          // Client-side issues (409 duplicate, 400 validation, etc.) — show the specifics.
+          userMessage = backendMessage || "Something went wrong. Please try again.";
+        }
+
+        setErrorMessage(userMessage);
+        emailSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
         setTimeout(() => setErrorMessage(""), 10000);
       }
     } catch (error) {
@@ -362,8 +377,8 @@ const Waitlist = () => {
           >
             <option value="" disabled>How did you hear about us?</option>
             {referralSources.map((source) => (
-              <option key={source} value={source} className="text-[#1A1A1A]">
-                {source}
+              <option key={source.value} value={source.value} className="text-[#1A1A1A]">
+                {source.label}
               </option>
             ))}
           </select>
@@ -371,11 +386,11 @@ const Waitlist = () => {
         {(nameError || agencyNameError || webUrlError || emailError || sourceError) && (
           <p className="text-red-400 text-[16px] text-center -mt-4 mb-4 animate-pulse">
             {nameError
-              ? "Please enter your name."
+              ? "Please enter your full name (at least 5 characters)."
               : agencyNameError
-              ? "Please enter your agency name."
+              ? "Please enter your agency name (at least 5 characters)."
               : webUrlError
-              ? "Please enter your website URL."
+              ? "Please enter a valid website URL (e.g. https://youragency.com)."
               : emailError
               ? "Please enter a valid email address."
               : "Please tell us how you heard about us."}
