@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
+import LegalModal from "./LegalModal";
+import { termsTitle, termsEffectiveDate, termsPreamble, termsSections, termsClosing } from "./termsContent";
+import { privacyTitle, privacyEffectiveDate, privacyPreamble, privacySections, privacyClosing } from "./privacyContent";
 
 const destinations = [
   { city: "Singapore", hotels: 540, img: "/assets/explore1.png", showLabel: true },
@@ -94,6 +97,10 @@ const Waitlist = () => {
   const [agencyNameError, setAgencyNameError] = useState(false);
   const [webUrlError, setWebUrlError] = useState(false);
   const [sourceError, setSourceError] = useState(false);
+  const [agreedTerms, setAgreedTerms] = useState(false);
+  const [termsError, setTermsError] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [waitlistCount, setWaitlistCount] = useState(null);
   const [displayCount, setDisplayCount] = useState(0);
@@ -199,12 +206,15 @@ const Waitlist = () => {
         /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i.test(webUrl.trim())
       : true;
 
-    if (!isNameValid || !isAgencyNameValid || !isWebUrlValid || !isEmailValid || !isSourceValid) {
+    const isTermsValid = agreedTerms;
+
+    if (!isNameValid || !isAgencyNameValid || !isWebUrlValid || !isEmailValid || !isSourceValid || !isTermsValid) {
       setNameError(!isNameValid);
       setAgencyNameError(!isAgencyNameValid);
       setWebUrlError(!isWebUrlValid);
       setEmailError(!isEmailValid);
       setSourceError(!isSourceValid);
+      setTermsError(!isTermsValid);
       emailSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       setTimeout(() => {
         setNameError(false);
@@ -212,6 +222,7 @@ const Waitlist = () => {
         setWebUrlError(false);
         setEmailError(false);
         setSourceError(false);
+        setTermsError(false);
       }, 3000);
       return;
     }
@@ -477,8 +488,37 @@ const Waitlist = () => {
               </option>
             ))}
           </select>
+
+          {/* Terms agreement */}
+          <div className="flex items-start gap-3 mt-1 px-1">
+            <input
+              id="agreeTerms"
+              type="checkbox"
+              checked={agreedTerms}
+              onChange={(e) => setAgreedTerms(e.target.checked)}
+              className="mt-[3px] w-[18px] h-[18px] accent-[#6B6EF5] flex-shrink-0 cursor-pointer"
+            />
+            <label
+              htmlFor="agreeTerms"
+              className={`text-[13px] sm:text-[14px] leading-snug cursor-pointer transition-colors ${termsError ? "text-red-400" : "text-[#4a4a4a]"}`}
+            >
+              I have read and agree to all the{" "}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setTermsOpen(true);
+                }}
+                className="text-[#6B6EF5] font-semibold underline hover:text-[#5557e0]"
+              >
+                Terms of Use
+              </button>
+              .
+            </label>
+          </div>
         </div>
-        {(nameError || agencyNameError || webUrlError || emailError || sourceError) && (
+        {(nameError || agencyNameError || webUrlError || emailError || sourceError || termsError) && (
           <p className="text-red-400 text-[16px] text-center -mt-4 mb-4 animate-pulse">
             {nameError
               ? "Please enter your full name (at least 5 characters)."
@@ -488,7 +528,9 @@ const Waitlist = () => {
               ? "Please enter a valid website URL (e.g. https://youragency.com)."
               : emailError
               ? "Please enter a valid email address."
-              : "Please tell us how you heard about us."}
+              : sourceError
+              ? "Please tell us how you heard about us."
+              : "Please read and agree to the Terms of Use to continue."}
           </p>
         )}
         {errorMessage && (
@@ -726,12 +768,34 @@ const Waitlist = () => {
 
           {/* Links */}
           <div className="flex items-center justify-center gap-[28px] order-2 sm:order-3">
-            <a href="#" className="text-[#232323] text-[18px] font-normal whitespace-nowrap">Privacy Policy</a>
-            <a href="#" className="text-[#232323] text-[18px] font-normal whitespace-nowrap">Terms of Service</a>
+            <button onClick={() => setPrivacyOpen(true)} className="text-[#232323] text-[18px] font-normal whitespace-nowrap hover:text-[#6B6EF5] transition-colors">Privacy Policy</button>
+            <button onClick={() => setTermsOpen(true)} className="text-[#232323] text-[18px] font-normal whitespace-nowrap hover:text-[#6B6EF5] transition-colors">Terms of Service</button>
           </div>
 
         </div>
       </div>
+      {/* ─── Terms of Use Modal ─── */}
+      <LegalModal
+        open={termsOpen}
+        onClose={() => setTermsOpen(false)}
+        title={termsTitle}
+        effectiveDate={termsEffectiveDate}
+        preamble={termsPreamble}
+        sections={termsSections}
+        closing={termsClosing}
+      />
+
+      {/* ─── Privacy Policy Modal ─── */}
+      <LegalModal
+        open={privacyOpen}
+        onClose={() => setPrivacyOpen(false)}
+        title={privacyTitle}
+        effectiveDate={privacyEffectiveDate}
+        preamble={privacyPreamble}
+        sections={privacySections}
+        closing={privacyClosing}
+      />
+
       {/* ─── Success Modal ─── */}
       {submitted && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
