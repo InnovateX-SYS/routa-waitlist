@@ -98,11 +98,14 @@ const Waitlist = () => {
   const [webUrlError, setWebUrlError] = useState(false);
   const [sourceError, setSourceError] = useState(false);
   const [agreedTerms, setAgreedTerms] = useState(false);
+  const [agreedPrivacy, setAgreedPrivacy] = useState(false);
   const [termsError, setTermsError] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [waitlistCount, setWaitlistCount] = useState(null);
+  // Seed with the baseline so the badge shows immediately instead of waiting on the
+  // network fetch; it updates to the real total (+ baseline) once the request resolves.
+  const [waitlistCount, setWaitlistCount] = useState(WAITLIST_COUNT_BASELINE);
   const [displayCount, setDisplayCount] = useState(0);
   const intervalRef = useRef(null);
   const isResetting = useRef(false);
@@ -206,7 +209,7 @@ const Waitlist = () => {
         /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i.test(webUrl.trim())
       : true;
 
-    const isTermsValid = agreedTerms;
+    const isTermsValid = agreedTerms && agreedPrivacy;
 
     if (!isNameValid || !isAgencyNameValid || !isWebUrlValid || !isEmailValid || !isSourceValid || !isTermsValid) {
       setNameError(!isNameValid);
@@ -489,7 +492,7 @@ const Waitlist = () => {
             ))}
           </select>
 
-          {/* Terms agreement */}
+          {/* Terms of Use agreement */}
           <div className="flex items-start gap-3 mt-1 px-1">
             <input
               id="agreeTerms"
@@ -502,7 +505,7 @@ const Waitlist = () => {
               htmlFor="agreeTerms"
               className={`text-[13px] sm:text-[14px] leading-snug cursor-pointer transition-colors ${termsError ? "text-red-400" : "text-[#4a4a4a]"}`}
             >
-              I have read and agree to all the{" "}
+              I have read and agree to the{" "}
               <button
                 type="button"
                 onClick={(e) => {
@@ -513,6 +516,35 @@ const Waitlist = () => {
                 className="text-[#6B6EF5] font-semibold underline hover:text-[#5557e0]"
               >
                 Terms of Use
+              </button>
+              .
+            </label>
+          </div>
+
+          {/* Privacy Policy agreement */}
+          <div className="flex items-start gap-3 px-1">
+            <input
+              id="agreePrivacy"
+              type="checkbox"
+              checked={agreedPrivacy}
+              onChange={(e) => setAgreedPrivacy(e.target.checked)}
+              className="mt-[3px] w-[18px] h-[18px] accent-[#6B6EF5] flex-shrink-0 cursor-pointer"
+            />
+            <label
+              htmlFor="agreePrivacy"
+              className={`text-[13px] sm:text-[14px] leading-snug cursor-pointer transition-colors ${termsError ? "text-red-400" : "text-[#4a4a4a]"}`}
+            >
+              I have read and agree to the{" "}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setPrivacyOpen(true);
+                }}
+                className="text-[#6B6EF5] font-semibold underline hover:text-[#5557e0]"
+              >
+                Privacy Policy
               </button>
               .
             </label>
@@ -530,7 +562,7 @@ const Waitlist = () => {
               ? "Please enter a valid email address."
               : sourceError
               ? "Please tell us how you heard about us."
-              : "Please read and agree to the Terms of Use to continue."}
+              : "Please read and agree to the Terms of Use and Privacy Policy to continue."}
           </p>
         )}
         {errorMessage && (
@@ -783,6 +815,9 @@ const Waitlist = () => {
         preamble={termsPreamble}
         sections={termsSections}
         closing={termsClosing}
+        agreed={agreedTerms}
+        onAgreeChange={setAgreedTerms}
+        agreeLabel="I have read and agree to the Terms of Use."
       />
 
       {/* ─── Privacy Policy Modal ─── */}
@@ -794,6 +829,9 @@ const Waitlist = () => {
         preamble={privacyPreamble}
         sections={privacySections}
         closing={privacyClosing}
+        agreed={agreedPrivacy}
+        onAgreeChange={setAgreedPrivacy}
+        agreeLabel="I have read and agree to the Privacy Policy."
       />
 
       {/* ─── Success Modal ─── */}

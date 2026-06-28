@@ -3,8 +3,11 @@ import React from "react";
 // Generic legal-document modal. Renders a verbatim legal document with
 // automatic numbering: sections are 1, 2, 3 … and clauses are x.1, x.2 …
 // `bullets` on a clause render as un-numbered sub-points.
-const LegalModal = ({ open, onClose, title, effectiveDate, preamble = [], sections = [], closing }) => {
+const LegalModal = ({ open, onClose, title, effectiveDate, preamble = [], sections = [], closing, agreed, onAgreeChange, agreeLabel }) => {
   if (!open) return null;
+
+  const showAgree = typeof onAgreeChange === "function";
+  const checkboxId = `agree-${(title || "doc").replace(/\s+/g, "-").toLowerCase()}`;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-6 sm:py-10">
@@ -79,12 +82,28 @@ const LegalModal = ({ open, onClose, title, effectiveDate, preamble = [], sectio
         </div>
 
         {/* Footer */}
-        <div className="px-6 sm:px-8 py-4 border-t border-[#E5E5E5] flex justify-end">
+        <div className="px-6 sm:px-8 py-4 border-t border-[#E5E5E5] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          {showAgree ? (
+            <div className="flex items-start gap-3">
+              <input
+                id={checkboxId}
+                type="checkbox"
+                checked={!!agreed}
+                onChange={(e) => onAgreeChange(e.target.checked)}
+                className="mt-[2px] w-[18px] h-[18px] accent-[#6B6EF5] flex-shrink-0 cursor-pointer"
+              />
+              <label htmlFor={checkboxId} className="text-[13px] sm:text-[14px] text-[#4a4a4a] leading-snug cursor-pointer">
+                {agreeLabel || `I have read and agree to the ${title}.`}
+              </label>
+            </div>
+          ) : (
+            <span />
+          )}
           <button
             onClick={onClose}
-            className="bg-[#6B6EF5] text-white h-[44px] px-8 rounded-full font-bold text-[15px] transition-all duration-200 hover:bg-[#5557e0] hover:scale-105 active:scale-95"
+            className="bg-[#6B6EF5] text-white h-[44px] px-8 rounded-full font-bold text-[15px] transition-all duration-200 hover:bg-[#5557e0] hover:scale-105 active:scale-95 self-end sm:self-auto"
           >
-            Close
+            {showAgree && agreed ? "Done" : "Close"}
           </button>
         </div>
       </div>
