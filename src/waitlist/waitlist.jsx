@@ -391,17 +391,10 @@ const Waitlist = () => {
               className="mt-6 flex items-center gap-3 bg-white/15 backdrop-blur-md border border-white/25 rounded-full pl-2 pr-5 py-2"
               style={{ animation: "fadeIn 0.5s ease forwards" }}
             >
-              <div className="flex -space-x-2">
-                {[5, 12, 32, 47].map((id) => (
-                  <img
-                    key={id}
-                    src={`https://i.pravatar.cc/64?img=${id}`}
-                    alt=""
-                    loading="lazy"
-                    className="w-7 h-7 rounded-full border-2 border-white object-cover bg-white/20"
-                  />
-                ))}
-              </div>
+              <span className="relative flex w-3 h-3 flex-shrink-0 ml-1">
+                <span className="absolute inline-flex w-full h-full rounded-full bg-[#4ADE80] opacity-75 animate-ping" />
+                <span className="relative inline-flex w-3 h-3 rounded-full bg-[#22C55E]" />
+              </span>
               <p className="text-white text-[15px] sm:text-[16px] font-medium tracking-[0.01em] whitespace-nowrap">
                 <span className="font-bold">{displayCount.toLocaleString()}+</span>{" "}
                 people have joined the waitlist
