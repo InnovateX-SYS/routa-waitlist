@@ -45,9 +45,8 @@
         border-bottom: 1px solid rgba(107, 110, 245, 0.15);
       }
       .topbar-inner {
-        max-width: 880px;
-        margin: 0 auto;
-        padding: 14px 20px;
+        margin: 0;
+        padding: 14px clamp(20px, 5vw, 64px);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -71,13 +70,11 @@
       .back:hover { background: var(--brand-dark); transform: translateY(-1px); }
       .back:active { transform: translateY(0); }
       main {
-        max-width: 880px;
-        margin: 32px auto 64px;
-        padding: 44px 48px 56px;
+        max-width: none;
+        margin: 0;
+        padding: 44px clamp(20px, 5vw, 64px) 72px;
         background: #ffffff;
-        border: 1px solid rgba(107, 110, 245, 0.12);
-        border-radius: 20px;
-        box-shadow: 0 20px 50px -24px rgba(85, 87, 224, 0.35);
+        min-height: 100vh;
       }
       .doc-title {
         font-size: 32px;
@@ -123,11 +120,7 @@
       }
       @media (max-width: 600px) {
         .doc-title { font-size: 25px; }
-        main {
-          margin: 16px 12px 40px;
-          padding: 26px 22px 40px;
-          border-radius: 16px;
-        }
+        main { padding: 26px 18px 48px; }
         .back { padding: 9px 14px; font-size: 14px; }
       }
     </style>
