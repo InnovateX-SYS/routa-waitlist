@@ -793,8 +793,8 @@ const Waitlist = () => {
 
           {/* Links */}
           <div className="flex items-center justify-center gap-[28px] order-2 sm:order-3">
-            <button onClick={() => setPrivacyOpen(true)} className="text-[#232323] text-[18px] font-normal whitespace-nowrap hover:text-[#6B6EF5] transition-colors">Privacy Policy</button>
-            <button onClick={() => setTermsOpen(true)} className="text-[#232323] text-[18px] font-normal whitespace-nowrap hover:text-[#6B6EF5] transition-colors">Terms of Service</button>
+            <a href="/privacy" className="text-[#232323] text-[18px] font-normal whitespace-nowrap hover:text-[#6B6EF5] transition-colors">Privacy Policy</a>
+            <a href="/terms" className="text-[#232323] text-[18px] font-normal whitespace-nowrap hover:text-[#6B6EF5] transition-colors">Terms of Use</a>
           </div>
 
         </div>
